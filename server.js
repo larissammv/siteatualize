@@ -1,23 +1,24 @@
 const express = require("express");
-const fs = require("fs");
-const app = express();
-const PORT = process.env.PORT || 3000;
-
 const cors = require("cors");
+const fs = require("fs");
+
+const app = express();
 app.use(cors());
 
 app.get("/posts", (req, res) => {
   try {
-    const raw = fs.readFileSync("posts.json", "utf8");
-    const data = JSON.parse(raw);
-    res.json(data);
+    const data = fs.readFileSync("./posts.json", "utf8");
+    res.setHeader("Content-Type", "application/json");
+    res.send(data);
   } catch (err) {
-    res.status(500).json({ error: "Não foi possível carregar os posts." });
+    console.error("Erro lendo posts.json:", err);
+    res.status(500).json({ error: "Erro ao carregar posts" });
   }
 });
 
 app.get("/", (req, res) => {
-  res.send("Backend funcionando! Use /posts para pegar os posts.");
+  res.send("Servidor funcionando!");
 });
 
-app.listen(PORT, () => console.log(`Rodando na porta ${PORT}`));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("Rodando na porta " + PORT));
