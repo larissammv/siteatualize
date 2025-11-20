@@ -8,7 +8,7 @@ const BASE_URL = "[https://lassis12.bearblog.dev](https://lassis12.bearblog.dev)
 async function getAllPosts() {
 try {
 // Pega a página principal do blog
-const listPage = await axios.get(`${BASE_URL}/blog`);
+const listPage = await axios.get(`${BASE_URL}/blog`); 
 const dom = new JSDOM(listPage.data);
 const document = dom.window.document;
 
@@ -71,3 +71,4 @@ console.error("❌ Erro ao buscar a lista de posts:", err.message);
 }
 
 getAllPosts();
+
