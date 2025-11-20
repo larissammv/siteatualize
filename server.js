@@ -1,12 +1,12 @@
 import express from "express";
 import fetch from "node-fetch";
-import * as cheerio from "cheerio";
+import xml2js from "xml2js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Página do BearBlog que sempre funciona
-const BEARBLOG_URL = "https://lassis12.bearblog.dev/blog";
+// Feed RSS do seu BearBlog (retorna 40 posts)
+const RSS_URL = "https://lassis12.bearblog.dev/feed/";
 
 app.get("/", (req, res) => {
   res.send("Backend da Lassis funcionando 💗");
@@ -14,27 +14,21 @@ app.get("/", (req, res) => {
 
 app.get("/posts", async (req, res) => {
   try {
-    const html = await fetch(BEARBLOG_URL).then(r => r.text());
-    const $ = cheerio.load(html);
+    const xml = await fetch(RSS_URL).then(r => r.text());
 
-    const posts = [];
-
-    $("article").each((i, el) => {
-      const title = $(el).find("h2").text().trim();
-      const link = $(el).find("a").attr("href");
-      const date = $(el).find("time").text().trim();
-      const description = $(el).find(".content").html() || "";
-
-      posts.push({
-        title,
-        link: `https://lassis12.bearblog.dev${link}`,
-        pubDate: new Date(date).toISOString(),
-        description
-      });
+    const parsed = await xml2js.parseStringPromise(xml, {
+      explicitArray: false,
+      mergeAttrs: true
     });
 
-    // Ordenar do mais novo para o mais antigo
-    posts.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+    const items = parsed.rss.channel.item || [];
+
+    const posts = items.map(item => ({
+      title: item.title,
+      link: item.link,
+      pubDate: new Date(item.pubDate).toISOString(),
+      description: item["content:encoded"] || item.description || ""
+    }));
 
     res.json(posts);
 
