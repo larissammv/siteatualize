@@ -1,3 +1,4 @@
+// fetchPosts.js
 const axios = require("axios");
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
@@ -11,6 +12,7 @@ const dom = new JSDOM(listPage.data);
 const document = dom.window.document;
 
 ```
+// Pega links válidos dos posts
 const links = [...document.querySelectorAll("a")]
   .map(a => a.getAttribute("href"))
   .filter(href => href && href.startsWith("/") && !href.includes("blog"));
@@ -21,24 +23,29 @@ const posts = [];
 for (const link of uniqueLinks) {
   try {
     const postUrl = BASE_URL + link;
-    const doc = new JSDOM((await axios.get(postUrl)).data).window.document;
+    const postPage = await axios.get(postUrl);
+    const doc = new JSDOM(postPage.data).window.document;
 
     const title = doc.querySelector("h1")?.textContent.trim() || "Sem título";
+
     const contentEl = doc.querySelector("article .content");
-    let description = contentEl
-      ? contentEl.innerHTML
-          .replace(/<script[\s\S]*?<\/script>/gi, "")
-          .replace(/<style[\s\S]*?<\/style>/gi, "")
-          .trim()
-      : "";
+    let cleanHTML = "";
+    if (contentEl) {
+      cleanHTML = contentEl.innerHTML
+        .replace(/<script[\s\S]*?<\/script>/gi, "")
+        .replace(/<style[\s\S]*?<\/style>/gi, "")
+        .trim();
+    }
 
     let publishedAt = "";
     const timeEl = doc.querySelector("time[datetime]") || doc.querySelector("time");
-    if (timeEl) publishedAt = timeEl.getAttribute("datetime") || timeEl.textContent.trim();
+    if (timeEl) {
+      publishedAt = timeEl.getAttribute("datetime") || timeEl.textContent.trim();
+    }
 
-    posts.push({ url: postUrl, title, description, publishedAt });
+    posts.push({ url: postUrl, title, description: cleanHTML, publishedAt });
   } catch (err) {
-    console.error("Erro em post:", link, err.message);
+    console.error("Erro no post:", link, err.message);
   }
 }
 
@@ -46,8 +53,7 @@ return posts;
 ```
 
 } catch (err) {
-console.error("Erro ao buscar lista de posts:", err.message);
-return [];
+throw new Error("Erro ao buscar posts: " + err.message);
 }
 }
 
