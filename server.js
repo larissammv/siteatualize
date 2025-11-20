@@ -1,43 +1,46 @@
-import express from "express";
-import fetch from "node-fetch";
-import xml2js from "xml2js";
+// server.js
+const express = require('express');
+const xml2js = require('xml2js'); // converter RSS XML em JSON
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Feed RSS do seu BearBlog (retorna 40 posts)
-const RSS_URL = "https://lassis12.bearblog.dev/feed/";
+// Permitir que o frontend acesse
+app.use(cors());
 
-app.get("/", (req, res) => {
-  res.send("Backend da Lassis funcionando 💗");
-});
-
-app.get("/posts", async (req, res) => {
+app.get('/posts', async (req, res) => {
   try {
-    const xml = await fetch(RSS_URL).then(r => r.text());
+    const rssUrl = 'https://lassis12.bearblog.dev/feed/?type=rss';
+    
+    // Node 18+ tem fetch nativo
+    const response = await fetch(rssUrl);
+    if (!response.ok) throw new Error(`Erro ao acessar o feed: ${response.status}`);
 
-    const parsed = await xml2js.parseStringPromise(xml, {
-      explicitArray: false,
-      mergeAttrs: true
-    });
+    const xml = await response.text();
 
-    const items = parsed.rss.channel.item || [];
+    // Converter RSS XML para JSON
+    const parser = new xml2js.Parser({ explicitArray: false });
+    const json = await parser.parseStringPromise(xml);
 
+    let items = json.rss.channel.item;
+
+    // Garantir que items seja sempre um array
+    if (!Array.isArray(items)) items = [items];
+
+    // Transformar em formato mais fácil para frontend
     const posts = items.map(item => ({
       title: item.title,
       link: item.link,
-      pubDate: new Date(item.pubDate).toISOString(),
-      description: item["content:encoded"] || item.description || ""
+      pubDate: item.pubDate,
+      description: item.description
     }));
 
     res.json(posts);
-
   } catch (err) {
-    console.error("ERRO AO PROCESSAR:", err);
-    res.status(500).json({ error: "Erro ao carregar posts" });
+    console.error('Erro no backend:', err.message);
+    res.status(500).json({ error: 'Erro ao buscar posts' });
   }
 });
 
-app.listen(PORT, () => {
-  console.log("Servidor rodando na porta " + PORT);
-});
+app.listen(PORT, () => console.log(`Backend rodando em http://localhost:${PORT}`));
