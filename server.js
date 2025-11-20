@@ -1,42 +1,45 @@
 import express from "express";
-import fetch from "node-fetch";
-import * as cheerio from "cheerio";
 import cors from "cors";
+import { parseStringPromise } from "xml2js";
 
 const app = express();
-app.use(cors());
+const PORT = process.env.PORT || 3000;
 
-const BEAR_URL = "https://lassis12.bearblog.dev";
+app.use(cors());
 
 app.get("/posts", async (req, res) => {
   try {
-    const response = await fetch(BEAR_URL);
-    const html = await response.text();
+    const rssUrl = "https://lassis12.bearblog.dev/feed/?type=rss";
 
-    const $ = cheerio.load(html);
+    const response = await fetch(rssUrl);
+    if (!response.ok) throw new Error("Erro ao acessar o RSS");
 
-    const posts = [];
+    const xml = await response.text();
+    const json = await parseStringPromise(xml, { explicitArray: false });
 
-    $(".post-item").each((i, el) => {
-      if (i >= 10) return false; // limita a 10 posts
+    let items = json.rss.channel.item;
 
-      const title = $(el).find("a").text().trim();
-      const url = $(el).find("a").attr("href");
-      const description = $(el).find("p").text().trim();
+    if (!Array.isArray(items)) {
+      items = [items];
+    }
 
-      posts.push({
-        title,
-        url: BEAR_URL + url,
-        description,
-      });
-    });
+    // Apenas 10 posts
+    items = items.slice(0, 10);
+
+    const posts = items.map((item) => ({
+      title: item.title,
+      link: item.link,
+      pubDate: item.pubDate,
+      description: item.description,
+    }));
 
     res.json(posts);
-  } catch (e) {
-    console.error(e);
+  } catch (err) {
+    console.error("Erro no backend:", err.message);
     res.status(500).json({ error: "Erro ao carregar posts" });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server rodando na porta " + PORT));
+app.listen(PORT, () =>
+  console.log(`Servidor rodando em http://localhost:${PORT}`)
+);
