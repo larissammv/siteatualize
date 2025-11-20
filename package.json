@@ -1,15 +1,16 @@
 {
-  "name": "tiny",
+  "name": "bearblog-scraper",
   "version": "1.0.0",
-  "type": "module",
+  "description": "Scraper + backend para exibir posts do BearBlog",
   "main": "server.js",
   "scripts": {
+    "scrape": "node index.js",
     "start": "node server.js"
   },
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^5.1.0",
-    "node-fetch": "^3.3.2",
-    "xml2js": "^0.6.2"
+    "axios": "^1.6.0",
+    "express": "^4.18.2",
+    "jsdom": "^24.0.0",
+    "cors": "^2.8.5"
   }
 }
