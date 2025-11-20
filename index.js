@@ -3,7 +3,7 @@ const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 const fs = require("fs");
 
-const BASE_URL = "https://lassis12.bearblog.dev";
+const BASE_URL = "https://lassis12.bearblogs.dev";
 
 async function getAllPosts() {
     const listPage = await axios.get(`${BASE_URL}/blog`);
@@ -47,3 +47,4 @@ async function getAllPosts() {
 }
 
 getAllPosts();
+
