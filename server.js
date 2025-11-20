@@ -1,46 +1,49 @@
-// server.js
-const express = require('express');
-const xml2js = require('xml2js'); // converter RSS XML em JSON
-const cors = require('cors');
+import express from "express";
+import fetch from "node-fetch";
+import * as cheerio from "cheerio";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Permitir que o frontend acesse
-app.use(cors());
+// URL do seu BearBlog
+const BEARBLOG_URL = "https://lassis12.bearblog.dev/blog";
 
-app.get('/posts', async (req, res) => {
+app.get("/", (req, res) => {
+  res.send("Backend da Lassis funcionando 💗");
+});
+
+app.get("/posts", async (req, res) => {
   try {
-    const rssUrl = 'https://lassis12.bearblog.dev/feed/?type=rss';
-    
-    // Node 18+ tem fetch nativo
-    const response = await fetch(rssUrl);
-    if (!response.ok) throw new Error(`Erro ao acessar o feed: ${response.status}`);
+    const html = await fetch(BEARBLOG_URL).then(r => r.text());
+    const $ = cheerio.load(html);
 
-    const xml = await response.text();
+    const posts = [];
 
-    // Converter RSS XML para JSON
-    const parser = new xml2js.Parser({ explicitArray: false });
-    const json = await parser.parseStringPromise(xml);
+    $("article").each((i, el) => {
+      const title = $(el).find("h2").text().trim();
+      const link = $(el).find("a").attr("href");
+      const date = $(el).find("time").text().trim();
+      const description = $(el).find(".content").html() || "";
 
-    let items = json.rss.channel.item;
+      posts.push({
+        title,
+        link: `https://lassis12.bearblog.dev${link}`,
+        pubDate: new Date(date).toISOString(),
+        description
+      });
+    });
 
-    // Garantir que items seja sempre um array
-    if (!Array.isArray(items)) items = [items];
-
-    // Transformar em formato mais fácil para frontend
-    const posts = items.map(item => ({
-      title: item.title,
-      link: item.link,
-      pubDate: item.pubDate,
-      description: item.description
-    }));
+    // Ordenar do mais novo para o mais antigo
+    posts.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
     res.json(posts);
+
   } catch (err) {
-    console.error('Erro no backend:', err.message);
-    res.status(500).json({ error: 'Erro ao buscar posts' });
+    console.error(err);
+    res.status(500).json({ error: "Erro ao carregar posts" });
   }
 });
 
-app.listen(PORT, () => console.log(`Backend rodando em http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log("Servidor rodando na porta " + PORT);
+});
