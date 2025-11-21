@@ -14,7 +14,7 @@ const rssUrl = "[https://lasis.bearblog.dev/feed/?type=rss](https://lasis.bearbl
 ```
 // Fetch nativo do Node 18+
 const response = await fetch(rssUrl);
-if (!response.ok) throw new Error(`Erro ao acessar o RSS: ${response.status}`);
+if (!response.ok) throw new Error("Erro ao acessar o RSS: " + response.status);
 
 const xml = await response.text();
 const json = await parseStringPromise(xml, { explicitArray: false });
