@@ -3,7 +3,7 @@ const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 const fs = require("fs");
 
-const BASE_URL = "[https://lassis12.bearblog.dev](https://lassis12.bearblog.dev)";
+const BASE_URL = "[https://lasis.bearblog.dev](https://lasis.bearblog.dev)";
 
 async function getAllPosts() {
 try {
@@ -71,4 +71,5 @@ console.error("❌ Erro ao buscar a lista de posts:", err.message);
 }
 
 getAllPosts();
+
 
