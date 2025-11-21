@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import fetch from "node-fetch"; 
 import { parseStringPromise } from "xml2js";
 
 const app = express();
@@ -13,27 +12,25 @@ try {
 const rssUrl = "[https://lasis.bearblog.dev/feed/?type=rss](https://lasis.bearblog.dev/feed/?type=rss)";
 
 ```
+// Fetch nativo do Node 18+
 const response = await fetch(rssUrl);
-if (!response.ok) throw new Error("Erro ao acessar o RSS");
+if (!response.ok) throw new Error(`Erro ao acessar o RSS: ${response.status}`);
 
 const xml = await response.text();
 const json = await parseStringPromise(xml, { explicitArray: false });
 
 let items = json.rss.channel.item;
+if (!items) items = [];
+if (!Array.isArray(items)) items = [items];
 
-if (!Array.isArray(items)) {
-  items = [items];
-}
-
-// Apenas 10 posts
-items = items.slice(0, 10);
-
-const posts = items.map((item) => ({
-  title: item.title,
-  link: item.link,
-  pubDate: item.pubDate,
-  description: item.description,
-}));
+const posts = items
+  .slice(0, 10)
+  .map(item => ({
+    title: item.title || "",
+    link: item.link || "",
+    pubDate: item.pubDate || "",
+    description: item.description || ""
+  }));
 
 res.json(posts);
 ```
@@ -44,6 +41,4 @@ res.status(500).json({ error: "Erro ao carregar posts" });
 }
 });
 
-app.listen(PORT, () =>
-console.log(`Servidor rodando em http://localhost:${PORT}`)
-);
+app.listen(PORT, () => console.log(`Servidor rodando em http://localhost:${PORT}`));
