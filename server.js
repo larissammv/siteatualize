@@ -1,29 +1,45 @@
-// server.js
-const express = require("express");
-const cors = require("cors");
-const fetchPosts = require("./fetchPosts");
+import express from "express";
+import cors from "cors";
+import { parseStringPromise } from "xml2js";
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
 app.use(cors());
 
-app.get("/api/posts", async (req, res) => {
-  try {
-    const posts = await fetchPosts();
-    res.json(posts);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Também aceita /posts (sem /api)
 app.get("/posts", async (req, res) => {
   try {
-    const posts = await fetchPosts();
+    const rssUrl = "https://lassis12.bearblog.dev/feed/?type=rss";
+
+    const response = await fetch(rssUrl);
+    if (!response.ok) throw new Error("Erro ao acessar o RSS");
+
+    const xml = await response.text();
+    const json = await parseStringPromise(xml, { explicitArray: false });
+
+    let items = json.rss.channel.item;
+
+    if (!Array.isArray(items)) {
+      items = [items];
+    }
+
+    // Apenas 10 posts
+    items = items.slice(0, 10);
+
+    const posts = items.map((item) => ({
+      title: item.title,
+      link: item.link,
+      pubDate: item.pubDate,
+      description: item.description,
+    }));
+
     res.json(posts);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Erro no backend:", err.message);
+    res.status(500).json({ error: "Erro ao carregar posts" });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server rodando na porta ${PORT}`));
+app.listen(PORT, () =>
+  console.log(`Servidor rodando em http://localhost:${PORT}`)
+);
