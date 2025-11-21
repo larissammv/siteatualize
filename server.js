@@ -9,7 +9,7 @@ app.use(cors());
 
 app.get("/posts", async (req, res) => {
   try {
-    const rssUrl = "https://lassis12.bearblog.dev/feed/?type=rss";
+    const rssUrl = "https://lasis.bearblog.dev/feed/?type=rss";
 
     const response = await fetch(rssUrl);
     if (!response.ok) throw new Error("Erro ao acessar o RSS");
@@ -43,3 +43,4 @@ app.get("/posts", async (req, res) => {
 app.listen(PORT, () =>
   console.log(`Servidor rodando em http://localhost:${PORT}`)
 );
+
