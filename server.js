@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import fetch from "node-fetch"; 
 import { parseStringPromise } from "xml2js";
 
 const app = express();
@@ -12,7 +13,7 @@ try {
 const rssUrl = "[https://lasis.bearblog.dev/feed/?type=rss](https://lasis.bearblog.dev/feed/?type=rss)";
 
 ```
-const response = await fetch(rssUrl); // Node 18+ já tem fetch
+const response = await fetch(rssUrl);
 if (!response.ok) throw new Error("Erro ao acessar o RSS");
 
 const xml = await response.text();
